@@ -73,6 +73,92 @@ def tinyMazeSearch(problem):
     return  [s, s, w, s, w, w, s, w]
 
 def depthFirstSearch(problem):
+
+    stk = util.Stack()
+    stk.push(problem.getStartState())
+    visited = { problem.getStartState(): True }
+    parents = { problem.getStartState(): None }
+    successors = {}
+    goal = None
+
+    while not stk.isEmpty():
+        cur = stk.pop()
+        
+        if problem.isGoalState(cur):
+            goal = cur
+            break
+
+        nxt = problem.getSuccessors(cur)
+        successors[cur] = nxt
+
+        for move in nxt:
+            if move[0] in visited:
+                continue
+
+            parents[move[0]] = cur
+            
+            visited[move[0]] = True
+            stk.push(move[0])
+
+    path = [ goal ]
+
+    while path[-1] is not None:
+        path.append(parents[path[-1]])
+
+    imnotlost = []
+
+    actualpath = path[::-1][1:]
+    for i in range(len(actualpath) - 1):
+        step = actualpath[i]
+        nxt = actualpath[i + 1]
+
+        poss = successors[step]
+        for move in poss:
+            if move[0] == nxt:
+                imnotlost.append(move[1])
+
+#    print("Im not actully lost: ", imnotlost)
+
+    return imnotlost
+
+#     s = util.Stack() # contains tuples of positions
+#     parents = {}
+#     visited = {}
+#     parents[problem.getStartState()] = None # [ ( , ) ]
+#     goal = None
+
+#     s.push(problem.getStartState())
+
+#     while not s.isEmpty():
+#         print(s)
+#         element = s.pop()
+
+#         if problem.isGoalState(element):
+#             goal = element
+#             break
+
+#         successors = problem.getSuccessors(element)
+        
+#         for successor in successors:
+#             # If this successor doesn't have a parent, we want to set this as our parent
+#             if not successor[0] in parents:
+
+#                 s.push(successor[0])
+
+#     start = problem.getStartState()
+
+#     print(parents)
+
+#     # build the path now
+#     path = [goal]
+#     print(goal)
+#     while parents[path[-1]] is not None:
+#         path.append(parents[path[-1]])
+# #        print(path)
+    
+#    print(path)
+
+
     """
     Search the deepest nodes in the search tree first.
 
@@ -87,7 +173,6 @@ def depthFirstSearch(problem):
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
