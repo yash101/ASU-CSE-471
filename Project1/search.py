@@ -18,6 +18,7 @@ Pacman agents (in searchAgents.py).
 """
 
 import util
+import sys
 
 class SearchProblem:
     """
@@ -72,117 +73,105 @@ def tinyMazeSearch(problem):
     w = Directions.WEST
     return  [s, s, w, s, w, w, s, w]
 
-def depthFirstSearch(problem):
-
-    stk = util.Stack()
-    stk.push(problem.getStartState())
-    visited = { problem.getStartState(): True }
-    parents = { problem.getStartState(): None }
-    successors = {}
-    goal = None
-
-    while not stk.isEmpty():
-        cur = stk.pop()
-        
-        if problem.isGoalState(cur):
-            goal = cur
-            break
-
-        nxt = problem.getSuccessors(cur)
-        successors[cur] = nxt
-
-        for move in nxt:
-            if move[0] in visited:
-                continue
-
-            parents[move[0]] = cur
-            
-            visited[move[0]] = True
-            stk.push(move[0])
-
-    path = [ goal ]
-
-    while path[-1] is not None:
-        path.append(parents[path[-1]])
-
-    imnotlost = []
-
-    actualpath = path[::-1][1:]
-    for i in range(len(actualpath) - 1):
-        step = actualpath[i]
-        nxt = actualpath[i + 1]
-
-        poss = successors[step]
-        for move in poss:
-            if move[0] == nxt:
-                imnotlost.append(move[1])
-
-#    print("Im not actully lost: ", imnotlost)
-
-    return imnotlost
-
-#     s = util.Stack() # contains tuples of positions
-#     parents = {}
-#     visited = {}
-#     parents[problem.getStartState()] = None # [ ( , ) ]
-#     goal = None
-
-#     s.push(problem.getStartState())
-
-#     while not s.isEmpty():
-#         print(s)
-#         element = s.pop()
-
-#         if problem.isGoalState(element):
-#             goal = element
-#             break
-
-#         successors = problem.getSuccessors(element)
-        
-#         for successor in successors:
-#             # If this successor doesn't have a parent, we want to set this as our parent
-#             if not successor[0] in parents:
-
-#                 s.push(successor[0])
-
-#     start = problem.getStartState()
-
-#     print(parents)
-
-#     # build the path now
-#     path = [goal]
-#     print(goal)
-#     while parents[path[-1]] is not None:
-#         path.append(parents[path[-1]])
-# #        print(path)
+def depthFirstSearchRecursive(problem, parent, expand, direction, pathstk, pathvisited):
+    if problem.isGoalState(expand):
+        pathstk.push((expand, direction))
+        return True
     
-#    print(path)
+    if expand in pathvisited:
+        return False
+    
+    # get the next possible states
+    nextStates = problem.getSuccessors(expand)
+    pathstk.push((expand, direction))
+    pathvisited[expand] = True
 
+    for state in nextStates:
+        if depthFirstSearchRecursive(problem, expand, state[0], state[1], pathstk, pathvisited):
+            return True
+    
+    pathstk.pop()
+    del pathvisited[expand]
+    return False
 
-    """
-    Search the deepest nodes in the search tree first.
+def depthFirstSearch(problem): # recursive algorithm that is more likely to work
+    sys.setrecursionlimit(1500)
+    pathstk = util.Stack()
+    visited = {}
+    depthFirstSearchRecursive(problem, None, problem.getStartState(), None, pathstk, visited)
+    path = []
+    while not pathstk.isEmpty():
+        path.append(pathstk.pop()[1])
 
-    Your search algorithm needs to return a list of actions that reaches the
-    goal. Make sure to implement a graph search algorithm.
-
-    To get started, you might want to try some of these simple commands to
-    understand the search problem that is being passed in:
-
-    print("Start:", problem.getStartState())
-    print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
-    print("Start's successors:", problem.getSuccessors(problem.getStartState()))
-    """
-    "*** YOUR CODE HERE ***"
+    print(path)
+    
+    return path[::-1][1:]
 
 def breadthFirstSearch(problem):
-    """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    start, goal = (problem.getStartState(), None), None
+    q = util.Queue()
+    visited, parents = {}, {}
+
+    q.push(start)
+    parents[start[0]] = None
+    visited[start[0]] = True
+
+    while not q.isEmpty():
+        cur = q.pop()
+        c_coords, c_dir = cur[0], cur[1]
+
+        if problem.isGoalState(c_coords):
+            goal = (c_coords, c_dir)
+            break
+
+        neighbors = problem.getSuccessors(c_coords)
+
+        for neighbor in neighbors:
+            n_coords, n_dir = neighbor[0], neighbor[1]
+
+            if n_coords in visited:
+                continue
+
+            visited[n_coords] = True
+            parents[n_coords] = (c_coords, n_dir)
+
+            q.push((n_coords, n_dir))
+
+    pathrev = [ goal ]
+    while parents[ pathrev[-1][0] ] is not None:
+        pathrev.append(parents[ pathrev[-1][0] ])
+    
+    path = [step[1] for step in pathrev[::-1]]
+    return path[:-1]
+
 
 def uniformCostSearch(problem):
-    """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    start, goal = (problem.getStartState(), []), None
+    queue = util.PriorityQueue()
+    visited = {}
+    c_path = None
+
+    queue.push((start[0], [], 0), 0)
+    while not queue.isEmpty():
+        cur = queue.pop()
+        c_coords, c_path, c_cost = cur[0], cur[1], cur[2]
+
+        if problem.isGoalState(c_coords):
+            goal = (c_coords, c_path)
+            break
+
+        if c_coords not in visited:
+            visited[c_coords] = True
+            
+            neighbors = problem.getSuccessors(c_coords)
+            for neighbor in neighbors:
+                n_coords, n_path, n_cost = neighbor[0], neighbor[1], neighbor[2]
+                path = c_path + [n_path]
+                cost = c_cost + n_cost
+                queue.push((n_coords, path, cost), cost)
+    
+    return c_path
+
 
 def nullHeuristic(state, problem=None):
     """
@@ -192,10 +181,32 @@ def nullHeuristic(state, problem=None):
     return 0
 
 def aStarSearch(problem, heuristic=nullHeuristic):
-    """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    start, goal = (problem.getStartState(), []), None
+    queue = util.PriorityQueue()
+    visited = {}
+    c_path = None
 
+    queue.push((start[0], [], 0), 0)
+    while not queue.isEmpty():
+        cur = queue.pop()
+        c_coords, c_path, c_cost = cur[0], cur[1], cur[2]
+
+        if problem.isGoalState(c_coords):
+            goal = (c_coords, c_path)
+            break
+
+        if c_coords not in visited:
+            visited[c_coords] = True
+            
+            neighbors = problem.getSuccessors(c_coords)
+            for neighbor in neighbors:
+                n_coords, n_path, n_cost = neighbor[0], neighbor[1], neighbor[2]
+                path = c_path + [n_path]
+                cost = c_cost + n_cost
+                queue.push((n_coords, path, cost),
+                    cost + heuristic(n_coords, problem))
+    
+    return c_path
 
 # Abbreviations
 bfs = breadthFirstSearch
