@@ -103,7 +103,8 @@ def depthFirstSearch(problem): # recursive algorithm that is more likely to work
     while not pathstk.isEmpty():
         path.append(pathstk.pop()[1])
 
-    print(path)
+#
+#     print(path)
     
     return path[::-1][1:]
 
