@@ -291,6 +291,7 @@ class CornersProblem(search.SearchProblem):
         # in initializing the problem
         "*** YOUR CODE HERE ***"
 
+        # # convert corners into a list because lists are way friendlier than tuples
         # self.cornersList = []
         # for corner in self.corners:
         #     self.cornersList.append(corner)
@@ -312,7 +313,6 @@ class CornersProblem(search.SearchProblem):
         c_list = []
         for c in cornersSet:
             c_list.append(c)
-    
 
         return (self.startingPosition, tuple(c_list))
 
@@ -323,27 +323,7 @@ class CornersProblem(search.SearchProblem):
         """
         "*** YOUR CODE HERE ***"
 
-        return len(state[1]) is 0
-
-        # if state in self.cornersList:
-        #     self.cornersList.remove(state)
-        #     return True
-        
-        # if len(self.cornersList) is 0:
-        #     return True
-##
-        # print(self.cornersList)
-
-        # if len(self.cornersList) is 0:
-        #     return True
-
-        # if state in self.cornersList:
-        #     self.cornersList.remove(state)
-
-        #     if len(self.cornersList) is 0:
-        #         return True
-
-        # return False
+        return len(state[1]) is 0 # => boolean
 
 
     def getSuccessors(self, state):
@@ -372,6 +352,7 @@ class CornersProblem(search.SearchProblem):
                 successors.append( ( ( nextState, tuple(cornersSet) ), action, 1) )
 
 
+        # probably should be above most of the code but this somehow works :)
         self._expanded += 1 # DO NOT CHANGE
         return successors
 
@@ -420,7 +401,7 @@ def cornersHeuristic(state, problem):
             furthest = dist
 
     if furthestCorner is None:
-        return 0 # trivial solution
+        return 0 # trivial solution; in reality though, if we hit this, something went wrong
     else:
         return furthest
 
@@ -519,11 +500,11 @@ def foodHeuristic(state, problem):
 
 #    print(problem.heuristicInfo)
 
-    # find the closest food (via manhattan distance)
-
     furthestFood, furthestFoodDistance = None, None
 
     for food in foodGrid.asList():
+
+        ### BFS from the start (current position) => food
 
         searchProblem = PositionSearchProblem(
             problem.startingGameState,
@@ -532,14 +513,18 @@ def foodHeuristic(state, problem):
             warn = False # stfu we not using a regular maze :P
         )
 
+        # actually search
         dist = len(search.bfs(searchProblem)) # get the length of the path to the food
 
+        ### finish BFS
+
+        # find the longest distance for the heuristic
         if furthestFood is None or dist > furthestFoodDistance:
             furthestFood = food
             furthestFoodDistance = dist
 
     if furthestFoodDistance is None:
-        return 0    # something went wrong
+        return 0    # something went wrong (trivial solution)
     
     return furthestFoodDistance
 
@@ -573,8 +558,6 @@ class ClosestDotSearchAgent(SearchAgent):
 
         "*** YOUR CODE HERE ***"
         return search.bfs(problem)
-
-#        util.raiseNotDefined()
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
@@ -611,9 +594,8 @@ class AnyFoodSearchProblem(PositionSearchProblem):
 
         "*** YOUR CODE HERE ***"
 
+        # check if pacman is eating a foodsies
         return state in self.food.asList()
-
-        util.raiseNotDefined()
 
 def mazeDistance(point1, point2, gameState):
     """
