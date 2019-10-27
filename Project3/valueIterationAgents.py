@@ -60,9 +60,24 @@ class ValueIterationAgent(ValueEstimationAgent):
         self.runValueIteration()
 
     def runValueIteration(self):
+        """
+        V(i+1, s) = max over a { sum over s' [ Pa(s, s')(Ra(s, s') + gamma Vi(s')) ] }
+        """
         # Write value iteration code here
         "*** YOUR CODE HERE ***"
+        # Get all the states in the MDP to iterate over
+        S = self.mdp.getStates()
+        newValues = []
+        for s in S:
 
+            # get the possible actions and their respective states to calculate the value
+            A = self.mdp.getPossibleActions(s)
+            for a in A:
+
+                # (nextState, prob)[]
+                Sprime = self.mdp.getTransitionStatesAndProbs(s, a)
+                for sprime in Sprime:
+                    val = 
 
     def getValue(self, state):
         """
