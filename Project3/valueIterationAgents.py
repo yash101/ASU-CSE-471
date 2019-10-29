@@ -71,13 +71,15 @@ class ValueIterationAgent(ValueEstimationAgent):
         for s in S:
 
             # get the possible actions and their respective states to calculate the value
+            # maximize over A
+            maxValue = None
             A = self.mdp.getPossibleActions(s)
             for a in A:
 
                 # (nextState, prob)[]
                 Sprime = self.mdp.getTransitionStatesAndProbs(s, a)
                 for sprime in Sprime:
-                    val = 
+                    val = (1. / len(A)) * 
 
     def getValue(self, state):
         """
