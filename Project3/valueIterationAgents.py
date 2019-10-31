@@ -80,21 +80,28 @@ class ValueIterationAgent(ValueEstimationAgent):
 
         for s in S:
 
+            if self.mdp.isTerminal(s):
+                continue
+
             # get the possible actions and their respective states to calculate the value
             # maximize over A
             maxValue = None
             A = self.mdp.getPossibleActions(s)
             for a in A:
 
+                _sum = 0
                 # (nextState, prob)[]
                 Sprime = self.mdp.getTransitionStatesAndProbs(s, a)
                 for (sprime, Pa) in Sprime:
                     Ra = self.mdp.getReward(s, a, sprime)
-                    gamma = (math.pow(self.discount, iteration))
+                    gamma = self.discount
+#                    gamma = (math.pow(self.discount, iteration))
                     Vi = self.values[sprime]
-                    val = (Pa * Ra) + (gamma * Vi)
-                    maxValue = noneMax([maxValue, val])
+                    val = Pa * (Ra + (gamma * Vi))
+                    _sum += val
 
+                maxValue = noneMax([maxValue, _sum])
+                print(maxValue)
             newValues[s] = maxValue
         
         self.values = newValues
@@ -105,9 +112,20 @@ class ValueIterationAgent(ValueEstimationAgent):
         """
         # Write value iteration code here
         "*** YOUR CODE HERE ***"
+        print(self.iterations)
 
+        # zeroing
+        if self.iterations is 0:
+            S = self.mdp.getStates()
+            for s in S:
+                self.values[s] = 0
+            return self.values
+
+        print("kung fuck")
         for i in range(self.iterations):
             self.valueIterationStep(i)
+
+        return self.values
 
     def getValue(self, state):
         """
