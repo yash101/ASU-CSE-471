@@ -38,8 +38,10 @@ import collections
 def noneMax(vals, defaultValue = None):
     max = None
     for val in vals:
-        if val is not None and max is not None and val > max:
-            max = val
+        if val is not None:
+            if max is None or val > max:
+                max = val
+
     if max is None:
         max = defaultValue
     
@@ -72,40 +74,44 @@ class ValueIterationAgent(ValueEstimationAgent):
         self.iterations = iterations
         self.values = util.Counter() # A Counter is a dict with default 0
 
-        self.runValueIteration()
-
         print(self.values)
 
-    def valueIterationStep(self, iteration):
+        self.runValueIteration()
+
+#        print(self.values)
+
+    def valueIterationStep(self):
+        """
+         Solve for V(k+1, s) for each state s
+        """
         # Get all the states in the MDP to iterate over
         S = self.mdp.getStates()
         newValues = self.values.copy()
 
-        for s in S:
+        for state in S:
 
-            if self.mdp.isTerminal(s):
+            if self.mdp.isTerminal(state):
                 continue
+            
+            maxState, A = None, self.mdp.getPossibleActions(state)
 
-            # get the possible actions and their respective states to calculate the value
-            # maximize over A
-            maxValue = None
-            A = self.mdp.getPossibleActions(s)
-            for a in A:
+            for action in A:
 
-                _sum = 0
-                # (nextState, prob)[]
-                Sprime = self.mdp.getTransitionStatesAndProbs(s, a)
+                sumAvg = 0
+                Sprime = self.mdp.getTransitionStatesAndProbs(state, action)
+                
                 for (sprime, Pa) in Sprime:
-                    Ra = self.mdp.getReward(s, a, sprime)
+                    Ra = self.mdp.getReward(state, action, sprime)
                     gamma = self.discount
-#                    gamma = (math.pow(self.discount, iteration))
+                    # gamma = (math.pow(self.discount, iteration))
                     Vi = self.values[sprime]
+                    
                     val = Pa * (Ra + (gamma * Vi))
-                    _sum += val
+                    sumAvg = sum([sumAvg, val])
 
-                maxValue = noneMax([maxValue, _sum])
-            newValues[s] = maxValue
-        
+                maxState = noneMax([maxState, sumAvg])
+            newValues[state] = maxState
+
         self.values = newValues
 
     def runValueIteration(self):
@@ -114,7 +120,6 @@ class ValueIterationAgent(ValueEstimationAgent):
         """
         # Write value iteration code here
         "*** YOUR CODE HERE ***"
-        print(self.iterations)
 
         # zeroing
         if self.iterations is 0:
@@ -123,9 +128,9 @@ class ValueIterationAgent(ValueEstimationAgent):
                 self.values[s] = 0
             return self.values
 
-        print("kung fuck")
-        for i in range(self.iterations):
-            self.valueIterationStep(i)
+        while self.iterations > 0:
+            self.valueIterationStep()
+            self.iterations -= 1
 
         return self.values
 
@@ -142,14 +147,13 @@ class ValueIterationAgent(ValueEstimationAgent):
           value function stored in self.values.
         """
         "*** YOUR CODE HERE ***"
+
         # Q(s, a) = sum of sprime ... [the weighted average]
         Q = 0
 
         # get next possible states and their probabilities
         Sprime = self.mdp.getTransitionStatesAndProbs(state, action)
         for (sprime, Pa) in Sprime:
-            if self.mdp.isTerminal(sprime):
-                continue
 
             Ra = self.mdp.getReward(state, action, sprime)
             discount = self.discount
@@ -158,7 +162,7 @@ class ValueIterationAgent(ValueEstimationAgent):
             # debug cus of crash
 #            print(sprime, Pa, Ra, discount, Vi)
 
-            Q += Pa * (Ra + (discount * Vi))
+            Q += (Pa * (Ra + (discount * Vi)))
         
         return Q
 
