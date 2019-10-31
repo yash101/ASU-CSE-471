@@ -71,7 +71,10 @@ class ValueIterationAgent(ValueEstimationAgent):
         self.discount = discount
         self.iterations = iterations
         self.values = util.Counter() # A Counter is a dict with default 0
+
         self.runValueIteration()
+
+        print(self.values)
 
     def valueIterationStep(self, iteration):
         # Get all the states in the MDP to iterate over
@@ -101,7 +104,6 @@ class ValueIterationAgent(ValueEstimationAgent):
                     _sum += val
 
                 maxValue = noneMax([maxValue, _sum])
-                print(maxValue)
             newValues[s] = maxValue
         
         self.values = newValues
