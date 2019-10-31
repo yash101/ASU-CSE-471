@@ -25,11 +25,25 @@
 # Student side autograding was added by Brad Miller, Nick Hay, and
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
+# Sources used:
+# https://en.wikipedia.org/wiki/Markov_decision_process
+# Class textbook
+# Class slides
 
-import mdp, util
+import mdp, util, math
 
 from learningAgents import ValueEstimationAgent
 import collections
+
+def noneMax(vals, defaultValue = None):
+    max = None
+    for val in vals:
+        if val is not None and max is not None and val > max:
+            max = val
+    if max is None:
+        max = defaultValue
+    
+    return max
 
 class ValueIterationAgent(ValueEstimationAgent):
     """
@@ -59,15 +73,11 @@ class ValueIterationAgent(ValueEstimationAgent):
         self.values = util.Counter() # A Counter is a dict with default 0
         self.runValueIteration()
 
-    def runValueIteration(self):
-        """
-        V(i+1, s) = max over a { sum over s' [ Pa(s, s')(Ra(s, s') + gamma Vi(s')) ] }
-        """
-        # Write value iteration code here
-        "*** YOUR CODE HERE ***"
+    def valueIterationStep(self, iteration):
         # Get all the states in the MDP to iterate over
         S = self.mdp.getStates()
-        newValues = []
+        newValues = self.values.copy()
+
         for s in S:
 
             # get the possible actions and their respective states to calculate the value
@@ -78,8 +88,26 @@ class ValueIterationAgent(ValueEstimationAgent):
 
                 # (nextState, prob)[]
                 Sprime = self.mdp.getTransitionStatesAndProbs(s, a)
-                for sprime in Sprime:
-                    val = (1. / len(A)) * 
+                for (sprime, Pa) in Sprime:
+                    Ra = self.mdp.getReward(s, a, sprime)
+                    gamma = (math.pow(self.discount, iteration))
+                    Vi = self.values[sprime]
+                    val = (Pa * Ra) + (gamma * Vi)
+                    maxValue = noneMax([maxValue, val])
+
+            newValues[s] = maxValue
+        
+        self.values = newValues
+
+    def runValueIteration(self):
+        """
+        V(i+1, s) = max over a { sum over s' [ Pa(s, s')(Ra(s, s') + gamma Vi(s')) ] }
+        """
+        # Write value iteration code here
+        "*** YOUR CODE HERE ***"
+
+        for i in range(self.iterations):
+            self.valueIterationStep(i)
 
     def getValue(self, state):
         """
@@ -94,7 +122,25 @@ class ValueIterationAgent(ValueEstimationAgent):
           value function stored in self.values.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # Q(s, a) = sum of sprime ... [the weighted average]
+        Q = 0
+
+        # get next possible states and their probabilities
+        Sprime = self.mdp.getTransitionStatesAndProbs(state, action)
+        for (sprime, Pa) in Sprime:
+            if self.mdp.isTerminal(sprime):
+                continue
+
+            Ra = self.mdp.getReward(state, action, sprime)
+            discount = self.discount
+            Vi = self.values[sprime]
+
+            # debug cus of crash
+#            print(sprime, Pa, Ra, discount, Vi)
+
+            Q += Pa * (Ra + (discount * Vi))
+        
+        return Q
 
     def computeActionFromValues(self, state):
         """
@@ -106,7 +152,22 @@ class ValueIterationAgent(ValueEstimationAgent):
           terminal state, you should return None.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        actionTaken = None
+
+        if self.mdp.isTerminal(state): # If the current state is terminal, no actions necessary :D
+            return None
+        
+        A = self.mdp.getPossibleActions(state)
+        maxSum = None
+
+        for a in A:
+            avg = self.computeQValueFromValues(state, a)
+
+            if maxSum is None or avg > maxSum or (maxSum is 0.0 and actionTaken is None):
+                actionTaken = a
+                maxSum = avg
+        
+        return actionTaken
 
     def getPolicy(self, state):
         return self.computeActionFromValues(state)
