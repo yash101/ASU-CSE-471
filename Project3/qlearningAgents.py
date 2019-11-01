@@ -98,8 +98,7 @@ class QLearningAgent(ReinforcementAgent):
         for a in A:
             Q = self.getQValue(state, a)
             if maxVal is None or maxVal <= Q:
-                maxVal = Q
-                action = a
+                maxVal, action = Q, a
             
         return action
 
@@ -150,7 +149,10 @@ class QLearningAgent(ReinforcementAgent):
         Q = self.getQValue(state, action)
         Qn = self.computeValueFromQValues(nextState)
         
-        self.values[(state, action)] = (aLearningRate * Q) + (learningRate * (reward + self.discount * Qn))
+        self.values[(state, action)] = sum([
+            (aLearningRate * Q),
+            (learningRate * (reward + self.discount * Qn))
+        ])
 
 #        util.raiseNotDefined()
 

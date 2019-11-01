@@ -285,6 +285,8 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
 
     def runValueIteration(self):
         "*** YOUR CODE HERE ***"
+        return "Not implemented :("
+
         # V(k+1, s) -> maximize over the action, the sum of ...
 
         # get the predecessors: (state): [((state), action_taken)]
@@ -356,26 +358,3 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
             for predecessor in pred:
                 PA = self.mdp.getPossibleActions(predecessor)
 #                for Pa in PA:
-                    
-
-# if self.mdp.isTerminal(state):
-#     continue
-
-# maxState, A = None, self.mdp.getPossibleActions(state)
-
-# for action in A:
-
-#     sumAvg = 0.0
-#     Sprime = self.mdp.getTransitionStatesAndProbs(state, action)
-    
-#     for (sprime, Pa) in Sprime:
-#         Ra = self.mdp.getReward(state, action, sprime)
-#         gamma = self.discount
-#         # gamma = (math.pow(self.discount, iteration))
-#         Vi = self.values[sprime]
-        
-#         val = Pa * (Ra + (gamma * Vi))
-#         sumAvg = sum([sumAvg, val])
-
-#     maxState = noneMax([maxState, sumAvg])
-# self.values[state] = maxState
