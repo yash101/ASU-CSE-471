@@ -74,11 +74,7 @@ class ValueIterationAgent(ValueEstimationAgent):
         self.iterations = iterations
         self.values = util.Counter() # A Counter is a dict with default 0
 
-        print(self.values)
-
         self.runValueIteration()
-
-#        print(self.values)
 
     def valueIterationStep(self):
         """
@@ -228,10 +224,44 @@ class AsynchronousValueIterationAgent(ValueIterationAgent):
               mdp.getReward(state)
               mdp.isTerminal(state)
         """
+        self.current = None
+
         ValueIterationAgent.__init__(self, mdp, discount, iterations)
+
 
     def runValueIteration(self):
         "*** YOUR CODE HERE ***"
+        for i in range(self.iterations):
+
+            if self.current is None:
+                self.current = 0
+            else:
+                self.current = (self.current + 1) % len(self.mdp.getStates())
+            
+            state = self.mdp.getStates()[self.current]
+
+            if self.mdp.isTerminal(state):
+                continue
+
+            maxState, A = None, self.mdp.getPossibleActions(state)
+
+            for action in A:
+
+                sumAvg = 0.0
+                Sprime = self.mdp.getTransitionStatesAndProbs(state, action)
+                
+                for (sprime, Pa) in Sprime:
+                    Ra = self.mdp.getReward(state, action, sprime)
+                    gamma = self.discount
+                    # gamma = (math.pow(self.discount, iteration))
+                    Vi = self.values[sprime]
+                    
+                    val = Pa * (Ra + (gamma * Vi))
+                    sumAvg = sum([sumAvg, val])
+
+                maxState = noneMax([maxState, sumAvg])
+            self.values[state] = maxState
+
 
 class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
     """
@@ -248,8 +278,104 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
           and then act according to the resulting policy.
         """
         self.theta = theta
+        self.discount = discount
+        self.iterations = iterations
+
         ValueIterationAgent.__init__(self, mdp, discount, iterations)
 
     def runValueIteration(self):
         "*** YOUR CODE HERE ***"
+        # V(k+1, s) -> maximize over the action, the sum of ...
 
+        # get the predecessors: (state): [((state), action_taken)]
+        predecessors = {}
+        q = util.PriorityQueue()
+        S = self.mdp.getStates()
+
+        # initialize
+        for s in S:
+            if self.mdp.isTerminal(s):
+                continue
+
+            # get next actions
+            A = self.mdp.getPossibleActions(s)
+            for a in A:
+                Sprime = self.mdp.getTransitionStatesAndProbs(s, a)
+
+                for sprime in Sprime:
+                    # s -a-> sprime
+                    #   insert: sprime: [(s, a)]
+
+                    if sprime not in predecessors:
+                        predecessors[sprime] = [(s, a)]
+                    else:
+                        predecessors[sprime].append([(s, a)])
+
+        
+        # run
+        ## Find the absolute value of the difference between the current value of s in self.values and the highest Q-value across all possible actions from s (this represents what the value should be); call this number diff. Do NOT update self.values[s] in this step.
+        for s in S:
+            if self.mdp.isTerminal(s):
+                continue
+
+            maxDiff = None
+            A = self.mdp.getPossibleActions(s)
+            for a in A:
+               diff = (self.values[s] - self.computeQValueFromValues(s, a))
+               maxDiff = noneMax([maxDiff, diff, -diff])
+            
+            q.push(s, -float(maxDiff))
+
+        for i in range(self.iterations):
+            if q.isEmpty():
+                break
+
+            s = q.pop()
+
+            if self.mdp.isTerminal(s):
+                continue
+
+            maxState, A = None, self.mdp.getPossibleActions(s)
+            for action in A:
+                sumAvg = 0.0
+                sprime = self.mdp.getTransitionStatesAndProbs(s, action)
+
+                for (sprime, Pa) in Sprime:
+                    Ra = self.mdp.getReward(s, action, sprime)
+                    gamma = self.discount
+                    Vi = self.values[sprime]
+
+                    val = Pa * (Ra + (gamma * Vi))
+                    sumAvg = sum([sumAvg, val])
+                
+                maxState = noneMax([maxState, sumAvg])
+            self.values[s] = maxState
+
+            pred = predecessors[s]
+
+            for predecessor in pred:
+                PA = self.mdp.getPossibleActions(predecessor)
+#                for Pa in PA:
+                    
+
+# if self.mdp.isTerminal(state):
+#     continue
+
+# maxState, A = None, self.mdp.getPossibleActions(state)
+
+# for action in A:
+
+#     sumAvg = 0.0
+#     Sprime = self.mdp.getTransitionStatesAndProbs(state, action)
+    
+#     for (sprime, Pa) in Sprime:
+#         Ra = self.mdp.getReward(state, action, sprime)
+#         gamma = self.discount
+#         # gamma = (math.pow(self.discount, iteration))
+#         Vi = self.values[sprime]
+        
+#         val = Pa * (Ra + (gamma * Vi))
+#         sumAvg = sum([sumAvg, val])
+
+#     maxState = noneMax([maxState, sumAvg])
+# self.values[state] = maxState
